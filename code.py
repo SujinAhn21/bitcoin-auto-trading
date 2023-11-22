@@ -61,7 +61,7 @@ def best_K_for_best_ror():
 
 # 이 함수는 최근의 가격 동향을 고려하여 최적의 k 값을 사용하여 매수 목표 가격을 계산
 def get_target_price(ticker):
-    # 최적의 k값을 찾는 함수를 호출
+    # 최적의 k값을 찾는 함수를 호출, while문 안에서 계속 갱신되도록 함
     best_K = best_K_for_best_ror()
     # pyupbit 라이브러리를 사용하여 ticker 페어의 일봉 데이터를 최근 2일 동안 가져옴
     df = pyupbit.get_ohlcv(ticker, interval="day", count=2)
@@ -111,6 +111,7 @@ def get_balance(ticker):
 # 현재가 조회
 def get_current_price(ticker):
     return pyupbit.get_orderbook(ticker=ticker)["orderbook_units"][0]["ask_price"]
+
 
 
 # 로그인
