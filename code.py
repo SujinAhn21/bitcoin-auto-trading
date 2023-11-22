@@ -60,7 +60,9 @@ def best_K_for_best_ror():
     return best_K
 
 # 이 함수는 최근의 가격 동향을 고려하여 최적의 k 값을 사용하여 매수 목표 가격을 계산
-def get_target_price(ticker, best_K):
+def get_target_price(ticker):
+    # 최적의 k값을 찾는 함수를 호출
+    best_K = best_K_for_best_ror()
     # pyupbit 라이브러리를 사용하여 ticker 페어의 일봉 데이터를 최근 2일 동안 가져옴
     df = pyupbit.get_ohlcv(ticker, interval="day", count=2)
 
@@ -114,9 +116,6 @@ def get_current_price(ticker):
 # 로그인
 upbit = pyupbit.Upbit(access, secret)
 
-# 최적의 k값을 찾는 함수를 호출
-best_K = best_K_for_best_ror()
-
 # 한국 시간대 설정
 korea_timezone = pytz.timezone('Asia/Seoul')
 now_korea = datetime.datetime.now(korea_timezone)
@@ -139,7 +138,7 @@ while True:
         # 오늘 09:00부터 다음날의 08:59:49까지
         if start_time <= now < (end_time - datetime.timedelta(seconds=10)):
             print("첫 번째 조건 들어감") #디버깅
-            target_price = get_target_price("KRW-BTC", best_K)
+            target_price = get_target_price("KRW-BTC")
             ma5 = get_ma5("KRW-BTC")
             current_price = get_current_price("KRW-BTC")
 
