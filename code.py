@@ -104,6 +104,7 @@ def get_balance(ticker):
     except Exception as e:
         # 예외가 발생하면 에러 메시지를 출력하고 0을 반환
         print_balance_e = f"사용가능한 잔고를 조회하는 과정에서 에러가 발생했습니다: {e}"
+        print(print_balance_e)
         client.chat_postMessage(channel = "#비트코인-자동매매", text = print_balance_e)
         return 0
 
@@ -175,5 +176,6 @@ while True:
         time.sleep(1)
     except Exception as e:
         print_autotrade_e = f"자동매매 하는 과정에서 에러가 발생했습니다: {e}"
+        print(print_autotrade_e)
         client.chat_postMessage(channel = "#비트코인-자동매매", text = print_autotrade_e)
         time.sleep(1)
