@@ -41,7 +41,7 @@ def best_K_for_best_ror():
         # 계산된 수익률을 딕셔너리에 저장.
         ror_dic[k] = ror
         # 현재 k값과 그에 대한 수익률을 출력.
-        print("%.1f(k값) : %f(수익률)" % (k, ror))
+        # print("%.1f(k값) : %f(수익률)" % (k, ror))
 
     # 최적의 k값을 찾기 위해 딕셔너리를 순회하면서 최댓값을 찾음.
     max_key = None
