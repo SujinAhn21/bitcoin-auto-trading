@@ -151,7 +151,10 @@ while True:
                 krw = get_balance("KRW")
                 if krw >= 5000:
                     buy_result = upbit.buy_market_order("KRW-BTC", krw * 0.9995)
-                    print(f"{buy_result} 가격에 샀음")
+                    if buy_result is not None and 'uuid' in buy_result:
+                        print(f"{buy_result['uuid']} 가격에 샀음")
+                    else:
+                        print("매수 실패")
 
         # start_time 이전이거나, (end_time - 10초) 이후일 때 실행할 작업
         # 예: 특정 거래 가능 시간 이외의 시간에는 다른 동작을 하는 등의 작업
@@ -164,7 +167,10 @@ while True:
                 # 그렇게 되면 코인은 전수매도되고 원화에서 수수료가 나감.
                 # 수수료를 반영하면 코인을 덜 팔고 일부 코인이 잔고에 남음.
                 sell_result = upbit.sell_market_order("KRW-BTC", btc)
-                print(f"{sell_result} 가격에 팔았음")
+                if sell_result is not None and 'uuid' in sell_result:
+                    print(f"{sell_result['uuid']} 가격에 팔았음")
+                else:
+                    print("매도 실패")
 
         time.sleep(1)
     except Exception as e:
