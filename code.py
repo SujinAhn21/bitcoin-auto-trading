@@ -65,23 +65,29 @@ def best_K_for_best_ror():
     return best_K
 
 #iloc경고 수정: 판다스에서 DataFrame을 조작할 때 .loc을 사용하면 해당 경고를 피할 수 있음
+# 수정 - DataFrame이 None 또는 비어있는 경우 예외 처리
 def get_target_price(ticker):
-    # 최적의 k값을 찾는 함수를 호출, while문 안에서 계속 갱신되도록 함
-    best_K = best_K_for_best_ror()
+    try:
+        # 최적의 k값을 찾는 함수를 호출, while문 안에서 계속 갱신되도록 함
+        best_K = best_K_for_best_ror()
 
-    # pyupbit 라이브러리를 사용하여 ticker 페어의 일봉 데이터를 최근 2일 동안 가져옴
-    df = pyupbit.get_ohlcv(ticker, interval="day", count=2)
+        # pyupbit 라이브러리를 사용하여 ticker 페어의 일봉 데이터를 최근 2일 동안 가져옴
+        df = pyupbit.get_ohlcv(ticker, interval="day", count=2)
 
-    # 수정 - DataFrame이 None 또는 비어있는 경우 예외 처리
-    if df is None or df.empty:
-        print("데이터가 비어있습니다.")
+        # 수정 - DataFrame이 None 또는 비어있는 경우 예외 처리
+        if df is None or df.empty:
+            print("데이터가 비어있습니다.")
+            return None
+
+        # 매수 목표 가격을 계산.
+        # target_price = 전일 종가 + (전일 고가 - 전일 저가) * 최적의 k값
+        target_price = df.loc[df.index[0], 'close'] + (df.loc[df.index[0], 'high'] - df.loc[df.index[0], 'low']) * best_K
+
+        return target_price
+
+    except Exception as e:
+        print(f"목표 가격을 가져오는 과정에서 에러 발생했습니다: {e}")
         return None
-
-    # 매수 목표 가격을 계산.
-    # target_price = 전일 종가 + (전일 고가 - 전일 저가) * 최적의 k값
-    target_price = df.loc[df.index[0], 'close'] + (df.loc[df.index[0], 'high'] - df.loc[df.index[0], 'low']) * best_K
-
-    return target_price
 
 
 # 시작 시간 조회
@@ -92,9 +98,13 @@ def get_start_time(ticker):
 
 # 5일 이동 평균선 조회
 def get_ma5(ticker):
-    df = pyupbit.get_ohlcv(ticker, interval="day", count=5)
-    ma5 = df['close'].rolling(5).mean().iloc[-1]
-    return ma5
+    try:
+        df = pyupbit.get_ohlcv(ticker, interval="day", count=5)
+        ma5 = df['close'].rolling(5).mean().iloc[-1]
+        return ma5
+    except Exception as e:
+        print(f"5일 이동평균선을 조회하는 과정에서 에러 발생했습니다: {e}")
+        return None
 
 # 사용 가능한 잔고를 조회하는 함수
 def get_balance(ticker):
