@@ -1,5 +1,5 @@
-!pip install pyupbit
-!pip install slack_sdk
+#!pip install pyupbit
+#!pip install slack_sdk
 
 import pyupbit #거래소
 import numpy as np
