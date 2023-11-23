@@ -100,7 +100,8 @@ def get_start_time(ticker):
 def get_ma5(ticker):
     try:
         df = pyupbit.get_ohlcv(ticker, interval="day", count=5)
-        ma5 = df['close'].rolling(5).mean().iloc[-1]
+        # 'iloc'를 'loc'로 변경
+        ma5 = df['close'].rolling(5).mean().loc[df.index[-1]]
         return ma5
     except Exception as e:
         print(f"5일 이동평균선을 조회하는 과정에서 에러 발생했습니다: {e}")
