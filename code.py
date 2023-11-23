@@ -1,10 +1,13 @@
-import pyupbit
+!pip install pyupbit
+!pip install slack_sdk
+
+import pyupbit #거래소
 import numpy as np
 import pandas as pd
 import time
 import datetime
 import pytz #한국시간
-import slack_sdk
+import slack_sdk #슬랙
 
 # slack API 키 설정
 slack_token = "xoxb-6175565485767-6187284450981-8zICUT1XUHxsf24uS57iQe7D"
@@ -26,12 +29,7 @@ def get_ror(k):
     # 수익률을 계산. 만약 당일 고가가 목표 매수가를 넘으면 수익률을 계산하고, 그렇지 않으면 1로 함.
     df['ror'] = np.where(df['high'] > df['target'], df['close'] / df['target'], 1)
     # 누적 수익률을 계산. 마지막 날의 누적 수익률을 반환.
-    # 판다스의 .iloc를 사용하여 인덱싱할 때 나타남.
-    # 왜냐면 해당 인덱스의 위치를 기반으로 값을 가져오는 것이 아니라
-    # 해당 인덱스의 라벨을 기반으로 가져오는 것으로 바뀌었기 때문.
-    # 경고를 없애고 해당 코드를 개선하려면 .iloc 대신 .loc를 사용하면 됨.
-    ror = df['ror'].cumprod().loc[df.index[-2]] # 수정
-
+    ror = df['ror'].cumprod().iloc[-1]
     return ror
 
 # 최적의 'k' 값 설정
@@ -64,31 +62,17 @@ def best_K_for_best_ror():
     best_K = max_key
     return best_K
 
-#iloc경고 수정: 판다스에서 DataFrame을 조작할 때 .loc을 사용하면 해당 경고를 피할 수 있음
-# 수정 - DataFrame이 None 또는 비어있는 경우 예외 처리
+# 이 함수는 최근의 가격 동향을 고려하여 최적의 k 값을 사용하여 매수 목표 가격을 계산
 def get_target_price(ticker):
-    try:
-        # 최적의 k값을 찾는 함수를 호출, while문 안에서 계속 갱신되도록 함
-        best_K = best_K_for_best_ror()
+    best_K = best_K_for_best_ror()
+    # pyupbit 라이브러리를 사용하여 ticker 페어의 일봉 데이터를 최근 2일 동안 가져옴
+    df = pyupbit.get_ohlcv(ticker, interval="day", count=2)
 
-        # pyupbit 라이브러리를 사용하여 ticker 페어의 일봉 데이터를 최근 2일 동안 가져옴
-        df = pyupbit.get_ohlcv(ticker, interval="day", count=2)
+    # 매수 목표 가격을 계산.
+    # target_price = 전일 종가 + (전일 고가 - 전일 저가) * 최적의 k값
+    target_price = df.iloc[0]['close'] + (df.iloc[0]['high'] - df.iloc[0]['low']) * best_K
 
-        # 수정 - DataFrame이 None 또는 비어있는 경우 예외 처리
-        if df is None or df.empty:
-            print("데이터가 비어있습니다.")
-            return None
-
-        # 매수 목표 가격을 계산.
-        # target_price = 전일 종가 + (전일 고가 - 전일 저가) * 최적의 k값
-        target_price = df.loc[df.index[0], 'close'] + (df.loc[df.index[0], 'high'] - df.loc[df.index[0], 'low']) * best_K
-
-        return target_price
-
-    except Exception as e:
-        print(f"목표 가격을 가져오는 과정에서 에러 발생했습니다: {e}")
-        return None
-
+    return target_price
 
 # 시작 시간 조회
 def get_start_time(ticker):
@@ -98,14 +82,9 @@ def get_start_time(ticker):
 
 # 5일 이동 평균선 조회
 def get_ma5(ticker):
-    try:
-        df = pyupbit.get_ohlcv(ticker, interval="day", count=5)
-        # 'iloc'를 'loc'로 변경
-        ma5 = df['close'].rolling(5).mean().loc[df.index[-1]]
-        return ma5
-    except Exception as e:
-        print(f"5일 이동평균선을 조회하는 과정에서 에러 발생했습니다: {e}")
-        return None
+    df = pyupbit.get_ohlcv(ticker, interval="day", count=5)
+    ma5 = df['close'].rolling(5).mean().iloc[-1]
+    return ma5
 
 # 사용 가능한 잔고를 조회하는 함수
 def get_balance(ticker):
@@ -127,14 +106,13 @@ def get_balance(ticker):
     except Exception as e:
         # 예외가 발생하면 에러 메시지를 출력하고 0을 반환
         print_balance_e = f"사용가능한 잔고를 조회하는 과정에서 에러가 발생했습니다: {e}"
-        client.chat_postMessage(channel = "#비트코인-자동매매", text = print_balance_e)
+        client.chat_postMessage(channel = "#비트코인-자동매매", text = print_balance_e) #에러메세지 슬랙으로 보냄
         return 0
 
 
 # 현재가 조회
 def get_current_price(ticker):
     return pyupbit.get_orderbook(ticker=ticker)["orderbook_units"][0]["ask_price"]
-
 
 
 # 로그인
@@ -148,7 +126,7 @@ start_time = get_start_time("KRW-BTC")
 print("현재 시간:", now_korea) #디버깅
 print("시작 시간:", start_time) #디버깅
 
-# 자동매매 시작
+# 자동매매 시작: 단타-> 당일 매매, 변동성 돌파 전략을 기본으로 함
 print("자동매매 시작")
 while True:
     try:
@@ -174,14 +152,11 @@ while True:
                 krw = get_balance("KRW")
                 if krw >= 5000:
                     buy_result = upbit.buy_market_order("KRW-BTC", krw * 0.9995)
-                    if buy_result is not None and 'uuid' in buy_result:
-                        print(f"{buy_result['uuid']} 가격에 샀음")
-                    else:
-                        print("매수 실패")
+                    print(f"{buy_result} 가격에 샀음") # 거래소 어플에서 알림이 오기 때문에 굳이 슬랙 메시지를 보내지 않음
 
         # start_time 이전이거나, (end_time - 10초) 이후일 때 실행할 작업
         # 예: 특정 거래 가능 시간 이외의 시간에는 다른 동작을 하는 등의 작업
-        # (다음날 시가에 매도하기 위해서)10초전에 싹 팔아버림-> 다음 날의 08:59:50부터 08:59:59까지
+        # 10초전에 싹 팔아버림-> 다음 날의 08:59:50부터 08:59:59까지 일괄매도
         elif (end_time - datetime.timedelta(seconds=10)) <= now < end_time:
             print("두 번째 조건 들어감") #디버깅
             btc = get_balance("BTC")
@@ -190,13 +165,11 @@ while True:
                 # 그렇게 되면 코인은 전수매도되고 원화에서 수수료가 나감.
                 # 수수료를 반영하면 코인을 덜 팔고 일부 코인이 잔고에 남음.
                 sell_result = upbit.sell_market_order("KRW-BTC", btc)
-                if sell_result is not None and 'uuid' in sell_result:
-                    print(f"{sell_result['uuid']} 가격에 팔았음")
-                else:
-                    print("매도 실패")
+                print(f"{sell_result} 가격에 팔았음") # 거래소 어플에서 알림이 오기 때문에 굳이 슬랙 메시지를 보내지 않음
 
         time.sleep(1)
     except Exception as e:
         print_autotrade_e = f"자동매매 하는 과정에서 에러가 발생했습니다: {e}"
-        client.chat_postMessage(channel = "#비트코인-자동매매", text = print_autotrade_e)
+        client.chat_postMessage(channel = "#비트코인-자동매매", text = print_autotrade_e) #슬랙으로 에러메시지 보냄
         time.sleep(1)
+
