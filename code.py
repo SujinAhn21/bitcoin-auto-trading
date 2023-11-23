@@ -26,8 +26,8 @@ def get_ror(k):
     # 수익률을 계산. 만약 당일 고가가 목표 매수가를 넘으면 수익률을 계산하고, 그렇지 않으면 1로 함.
     df['ror'] = np.where(df['high'] > df['target'], df['close'] / df['target'], 1)
     # 누적 수익률을 계산. 마지막 날의 누적 수익률을 반환.
-    # 판다스의 .iloc를 사용하여 인덱싱할 때 나타남. 
-    # 왜냐면 해당 인덱스의 위치를 기반으로 값을 가져오는 것이 아니라 
+    # 판다스의 .iloc를 사용하여 인덱싱할 때 나타남.
+    # 왜냐면 해당 인덱스의 위치를 기반으로 값을 가져오는 것이 아니라
     # 해당 인덱스의 라벨을 기반으로 가져오는 것으로 바뀌었기 때문.
     # 경고를 없애고 해당 코드를 개선하려면 .iloc 대신 .loc를 사용하면 됨.
     ror = df['ror'].cumprod().loc[df.index[-2]] # 수정
@@ -71,6 +71,11 @@ def get_target_price(ticker):
 
     # pyupbit 라이브러리를 사용하여 ticker 페어의 일봉 데이터를 최근 2일 동안 가져옴
     df = pyupbit.get_ohlcv(ticker, interval="day", count=2)
+
+    # 수정 - DataFrame이 None 또는 비어있는 경우 예외 처리
+    if df is None or df.empty:
+        print("데이터가 비어있습니다.")
+        return None
 
     # 매수 목표 가격을 계산.
     # target_price = 전일 종가 + (전일 고가 - 전일 저가) * 최적의 k값
