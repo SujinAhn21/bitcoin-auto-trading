@@ -26,7 +26,12 @@ def get_ror(k):
     # 수익률을 계산. 만약 당일 고가가 목표 매수가를 넘으면 수익률을 계산하고, 그렇지 않으면 1로 함.
     df['ror'] = np.where(df['high'] > df['target'], df['close'] / df['target'], 1)
     # 누적 수익률을 계산. 마지막 날의 누적 수익률을 반환.
-    ror = df['ror'].cumprod()[-2]
+    # 판다스의 .iloc를 사용하여 인덱싱할 때 나타남. 
+    # 왜냐면 해당 인덱스의 위치를 기반으로 값을 가져오는 것이 아니라 
+    # 해당 인덱스의 라벨을 기반으로 가져오는 것으로 바뀌었기 때문.
+    # 경고를 없애고 해당 코드를 개선하려면 .iloc 대신 .loc를 사용하면 됨.
+    ror = df['ror'].cumprod().loc[df.index[-2]] # 수정
+
     return ror
 
 # 최적의 'k' 값 설정
@@ -63,7 +68,7 @@ def best_K_for_best_ror():
 def get_target_price(ticker):
     # 최적의 k값을 찾는 함수를 호출, while문 안에서 계속 갱신되도록 함
     best_K = best_K_for_best_ror()
-    
+
     # pyupbit 라이브러리를 사용하여 ticker 페어의 일봉 데이터를 최근 2일 동안 가져옴
     df = pyupbit.get_ohlcv(ticker, interval="day", count=2)
 
@@ -179,4 +184,3 @@ while True:
         print_autotrade_e = f"자동매매 하는 과정에서 에러가 발생했습니다: {e}"
         client.chat_postMessage(channel = "#비트코인-자동매매", text = print_autotrade_e)
         time.sleep(1)
-        
