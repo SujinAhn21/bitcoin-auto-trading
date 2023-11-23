@@ -59,18 +59,20 @@ def best_K_for_best_ror():
     best_K = max_key
     return best_K
 
-# 이 함수는 최근의 가격 동향을 고려하여 최적의 k 값을 사용하여 매수 목표 가격을 계산
+#iloc경고 수정: 판다스에서 DataFrame을 조작할 때 .loc을 사용하면 해당 경고를 피할 수 있음
 def get_target_price(ticker):
     # 최적의 k값을 찾는 함수를 호출, while문 안에서 계속 갱신되도록 함
     best_K = best_K_for_best_ror()
+    
     # pyupbit 라이브러리를 사용하여 ticker 페어의 일봉 데이터를 최근 2일 동안 가져옴
     df = pyupbit.get_ohlcv(ticker, interval="day", count=2)
 
     # 매수 목표 가격을 계산.
     # target_price = 전일 종가 + (전일 고가 - 전일 저가) * 최적의 k값
-    target_price = df.iloc[0]['close'] + (df.iloc[0]['high'] - df.iloc[0]['low']) * best_K
+    target_price = df.loc[df.index[0], 'close'] + (df.loc[df.index[0], 'high'] - df.loc[df.index[0], 'low']) * best_K
 
     return target_price
+
 
 # 시작 시간 조회
 def get_start_time(ticker):
@@ -104,7 +106,6 @@ def get_balance(ticker):
     except Exception as e:
         # 예외가 발생하면 에러 메시지를 출력하고 0을 반환
         print_balance_e = f"사용가능한 잔고를 조회하는 과정에서 에러가 발생했습니다: {e}"
-        print(print_balance_e)
         client.chat_postMessage(channel = "#비트코인-자동매매", text = print_balance_e)
         return 0
 
@@ -159,7 +160,7 @@ while True:
 
         # start_time 이전이거나, (end_time - 10초) 이후일 때 실행할 작업
         # 예: 특정 거래 가능 시간 이외의 시간에는 다른 동작을 하는 등의 작업
-        # 10초전에 싹 팔아버림-> 다음 날의 08:59:50부터 08:59:59까지
+        # (다음날 시가에 매도하기 위해서)10초전에 싹 팔아버림-> 다음 날의 08:59:50부터 08:59:59까지
         elif (end_time - datetime.timedelta(seconds=10)) <= now < end_time:
             print("두 번째 조건 들어감") #디버깅
             btc = get_balance("BTC")
@@ -176,6 +177,6 @@ while True:
         time.sleep(1)
     except Exception as e:
         print_autotrade_e = f"자동매매 하는 과정에서 에러가 발생했습니다: {e}"
-        print(print_autotrade_e)
         client.chat_postMessage(channel = "#비트코인-자동매매", text = print_autotrade_e)
         time.sleep(1)
+        
