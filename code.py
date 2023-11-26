@@ -144,15 +144,15 @@ while True:
             ma5 = get_ma5("KRW-BTC")
             current_price = get_current_price("KRW-BTC")
 
-            # 1) 매수 조건으로 예측된 가격이 현재 가격보다 높은 경우로 설정
-            # => 예측된 가격이 현재 가격보다 높은경우로 설정하는 것은 상승장을 예측하겠다는 의미
+            # 1) 매수 조건으로 현재 가격이 목표가격보다 더 큰 경우로 설정
+            # => 목표가보다 현재가가 더 큰걸 원한다는 것은 상승장을 예측하겠다는 의미
             # 2) 매수 조건으로 현재 가격이 이동평균선보다 높은 경우로 설정
             # => 일반적으로 현재 가격이 이동평균선보다 크면 상승장이기 때문에 상승장을 예측하겠다는 의미
-            if target_price >= current_price and current_price >= ma5:
+            if current_price >= target_price and current_price >= ma5:
                 krw = get_balance("KRW")
                 if krw >= 5000:
                     buy_result = upbit.buy_market_order("KRW-BTC", krw * 0.9995)
-                    print(f"{buy_result} 가격에 샀음") # 거래소 어플에서 알림이 오기 때문에 굳이 슬랙 메시지를 보내지 않음
+                    print(buy_result) # 거래소 어플에서 알림이 오기 때문에 굳이 슬랙 메시지를 보내지 않음
 
         # start_time 이전이거나, (end_time - 10초) 이후일 때 실행할 작업
         # 예: 특정 거래 가능 시간 이외의 시간에는 다른 동작을 하는 등의 작업
@@ -165,7 +165,7 @@ while True:
                 # 그렇게 되면 코인은 전수매도되고 원화에서 수수료가 나감.
                 # 수수료를 반영하면 코인을 덜 팔고 일부 코인이 잔고에 남음.
                 sell_result = upbit.sell_market_order("KRW-BTC", btc)
-                print(f"{sell_result} 가격에 팔았음") # 거래소 어플에서 알림이 오기 때문에 굳이 슬랙 메시지를 보내지 않음
+                print(sell_result) # 거래소 어플에서 알림이 오기 때문에 굳이 슬랙 메시지를 보내지 않음
 
         time.sleep(1)
     except Exception as e:
