@@ -62,6 +62,7 @@ def best_K_for_best_ror():
     best_K = max_key
     return best_K
 
+'''
 # 이 함수는 최근의 가격 동향을 고려하여 최적의 k 값을 사용하여 매수 목표 가격을 계산
 def get_target_price(ticker):
     best_K = best_K_for_best_ror()
@@ -73,6 +74,27 @@ def get_target_price(ticker):
     target_price = df.iloc[0]['close'] + (df.iloc[0]['high'] - df.iloc[0]['low']) * best_K
 
     return target_price
+'''
+
+def get_target_price(ticker):
+    try:
+        best_K = best_K_for_best_ror()
+        # pyupbit 라이브러리를 사용하여 ticker 페어의 일봉 데이터를 최근 2일 동안 가져옴
+        df = pyupbit.get_ohlcv(ticker, interval="day", count=2)
+
+        if df is not None and not df.empty:
+            # 매수 목표 가격을 계산.
+            # target_price = 전일 종가 + (전일 고가 - 전일 저가) * 최적의 k값
+            target_price = df.iloc[0]['close'] + (df.iloc[0]['high'] - df.iloc[0]['low']) * best_K
+            return target_price
+        else:
+            # DataFrame이 None이거나 비어 있는 경우 처리
+            print("오류: get_target_price에서 DataFrame이 None 또는 비어 있음")
+            return None
+    except Exception as e:
+        print("get_target_price에서 오류 발생:", e)
+        return None
+
 
 # 시작 시간 조회
 def get_start_time(ticker):
