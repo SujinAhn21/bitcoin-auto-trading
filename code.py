@@ -76,6 +76,7 @@ def get_target_price(ticker):
     return target_price
 '''
 
+
 def get_target_price(ticker):
     try:
         best_K = best_K_for_best_ror()
@@ -94,8 +95,8 @@ def get_target_price(ticker):
     except Exception as e:
         print("get_target_price에서 오류 발생:", e)
         return None
-
-
+    
+    
 # 시작 시간 조회
 def get_start_time(ticker):
     df = pyupbit.get_ohlcv(ticker, interval="day", count=1)
