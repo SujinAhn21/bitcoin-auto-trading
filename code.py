@@ -64,6 +64,20 @@ def best_K_for_best_ror():
         print("best_K_for_best_ror에서 오류 발생:", e)
         return None
 
+# 목표 매수가를 계산하는 함수
+def get_target_price(ticker, k):
+    try:
+        # 현재 가격을 조회
+        current_price = pyupbit.get_current_price(ticker)
+        # 일봉 데이터를 가져옴
+        df = pyupbit.get_ohlcv(ticker, interval="day", count=2)
+        # 전일 고가와 전일 저가를 이용하여 변동폭을 계산
+        target_price = current_price + (df.iloc[-2]['high'] - df.iloc[-2]['low']) * k
+        return target_price
+    except Exception as e:
+        print("get_target_price에서 오류 발생:", e)
+        return None
+
 # 현재 시간을 한국 시간으로 가져오기
 def get_now_korea_time():
     korea_timezone = pytz.timezone('Asia/Seoul')
