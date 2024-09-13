@@ -10,13 +10,13 @@ import pytz #한국시간
 import slack_sdk #슬랙
 
 # slack API 키 설정
-slack_token = "xoxb-6175565485767-6187284450981-8zICUT1XUHxsf24uS57iQe7D"
+slack_token = ""
 client = slack_sdk.WebClient(token = slack_token)
 #client.chat_postMessage(channel = "#비트코인-자동매매", text = "Hello World")
 
 # UPbit API 키 설정
-access = "HoZqFc3wygaRgdk8PO3e5TassXMx9sbO9cx0ju82"
-secret = "hWz8bxNXn68RfzUxgxBjnN95whTLbxh3ix26bxnx"
+access = ""
+secret = ""
 
 # 변동성 돌파 전략을 통한 수익률 계산
 def get_ror(k):
